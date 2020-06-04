@@ -3,7 +3,7 @@
 __all__ = ['predicter']
 
 # Cell
-from newstrends import loader
+from newstrends import loader,
 
 # Cell
 class predicter:

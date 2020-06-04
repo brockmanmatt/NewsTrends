@@ -5,11 +5,13 @@ __all__ = ["index", "modules", "custom_doc_links", "git_url"]
 index = {"article_holder": "00_loadarticles.ipynb",
          "CoverageTrendsLoader": "00_loadarticles.ipynb",
          "describer": "01_descriptive_analysis.ipynb",
-         "predicter": "02_predictive_analysis.ipynb"}
+         "predicter": "02_predictive_analysis.ipynb",
+         "visualizer": "03_visualize.ipynb"}
 
 modules = ["loader.py",
            "describe.py",
-           "predict.py"]
+           "predict.py",
+           "visualize.py"]
 
 doc_url = "https://brockmanmatt.github.io/newstrends/"
 

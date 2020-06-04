@@ -1,4 +1,1 @@
-# nbdev template
-
-Use this template to more easily create your nbdev project.
-
+Tools for loading and analyzing news content. A work in progress.
