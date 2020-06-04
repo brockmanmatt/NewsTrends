@@ -10,16 +10,40 @@ from datetime import timezone
 import matplotlib.pyplot as plt
 
 # Cell
+import statsmodels.api as sm
+from statsmodels.tsa.api import VAR
+from pmdarima import auto_arima
+import numpy as np
+
+import warnings
+warnings.filterwarnings("ignore")
+
+
+# Cell
 class visualizer:
     "my visualizer! Don't know what I'm doing with it yet though"
 
-    def runDefault(self, outdir="."):
+    def __init__(self, coverageTrendsPath=".", workdir = "docs"):
+        """ initializing building a list of all the pkls in workdir"""
+        self.coverageTrendsPath = coverageTrendsPath
+        self.workdir = workdir
+        self.outfir = outdir
+
+        os.makedirs(outdir, exist_ok=True)
+        os.makedirs(workdir, exist_ok=True)
+
+        self.colors = ["orange", "green", "red", "brown", "blue", "yellow", "pink"]
+
+
+    def runDefault(self):
+
+        outdir=self.workdir
 
         publisherList = ["newyorktimes", "washingtonpost"]
 
         describer = describe.describer()
 
-        describer.set_articleDir(path="../CoverageTrends")
+        describer.set_articleDir(path=self.coverageTrendsPath)
         describer.load_articles(publications=publisherList, lastN=5)
         describer.fitVectorizer(ngram_range=(1,1))
 
@@ -38,6 +62,14 @@ class visualizer:
 
         df = describer.df
 
+        """
+        If I remember what this is doing, I'm using counter to find signifcant terms, then going and grpahing
+        them, saving the time series in a pkl in outdir;
+
+        The thing is, the way I'm building this, I want to use pip to import to the CoverageTrends folder, so
+        path should be "." and not "../CoverageTrends as I'm doing here; so what I want is visualzier to have
+        a path to coverage_trends!"
+        """
         for middleWord in vcs.dropna().index: #k, this is going to be wayyy too many images, but just testing
 
             tmp = df[df["tokens"].apply(lambda x: (middleWord in x))].copy().fillna(0)
