@@ -27,9 +27,7 @@ class visualizer:
         """ initializing building a list of all the pkls in workdir"""
         self.coverageTrendsPath = coverageTrendsPath
         self.workdir = workdir
-        self.outfir = outdir
 
-        os.makedirs(outdir, exist_ok=True)
         os.makedirs(workdir, exist_ok=True)
 
         self.colors = ["orange", "green", "red", "brown", "blue", "yellow", "pink"]
@@ -113,7 +111,7 @@ class visualizer(visualizer):
             print(target)
             try:
                 df = pd.read_pickle(target)
-                #self.buildQuickVAR(df, target.split("/")[-1][:-4])
+                self.buildQuickVAR(df, target.split("/")[-1][:-4])
                 if verbose:
                     print("var done")
                 myFreq = "3h"
@@ -125,7 +123,7 @@ class visualizer(visualizer):
 
     def buildQuickVAR(self, df, name, test_size=-1, validation_size=-1):
         """ builds VAR model for series """
-        os.makedirs("{}/VAR".format(self.workdir), exist_ok=True)
+        os.makedirs("{}/models/VAR".format(self.workdir), exist_ok=True)
 
         #Fit model
         model = VAR(df)
@@ -142,7 +140,7 @@ class visualizer(visualizer):
         ax = newVals.plot(style=":", figsize=(8,8), color=self.colors, title="VAR Quick Fit for {}".format(name))
         df.plot(ax=ax, color=self.colors, legend=False)
 
-        ax.figure.savefig("{}/VAR/{}.jpg".format(self.workdir, name))
+        ax.figure.savefig("{}/models/VAR/{}.jpg".format(self.workdir, name))
         plt.close('all') #close all figures
 
     def buildQuickSARIMAX(self, df, name, freq=24, test_size=-1, validation_size=-1):
@@ -164,8 +162,8 @@ class visualizer(visualizer):
         corr_df = corr_df.dropna().corr()[df.columns][len(df.columns):]
 
         #since I generated this, I might as well save it to a csv (js can't read pkl)
-        os.makedirs("{}/{}".format(self.workdir, "corr"), exist_ok=True)
-        corr_df.to_csv("{}/{}/{}.csv".format(self.workdir, "corr", name))
+        os.makedirs("{}/models/{}".format(self.workdir, "corr"), exist_ok=True)
+        corr_df.to_csv("{}/models/{}/{}.csv".format(self.workdir, "corr", name))
 
         max_lag = -1
         results_df = df.copy()
@@ -199,5 +197,5 @@ class visualizer(visualizer):
         ax = results_df[max_lag:].plot(legend=False, style=":", color=self.colors, title=name, figsize=(8,8))
         df.plot(ax=ax, style="-", color=self.colors, legend=True)
 
-        ax.figure.savefig("{}/SARIMAX/{}.jpg".format(self.workdir, name))
+        ax.figure.savefig("{}/models/SARIMAX/{}.jpg".format(self.workdir, name))
         plt.close('all') #close all figures
