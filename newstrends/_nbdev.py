@@ -6,6 +6,7 @@ index = {"article_holder": "00_loadarticles.ipynb",
          "CoverageTrendsLoader": "00_loadarticles.ipynb",
          "describer": "01_descriptive_analysis.ipynb",
          "predicter": "02_predictive_analysis.ipynb",
+         "get_mse": "02_predictive_analysis.ipynb",
          "visualizer": "03_visualize.ipynb"}
 
 modules = ["loader.py",
