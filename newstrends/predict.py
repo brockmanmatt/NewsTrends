@@ -11,6 +11,10 @@ warnings.filterwarnings("ignore")
 
 
 # Cell
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+import numpy as np
+
+# Cell
 class predicter(loader.article_holder):
 
     def __init__(self):
