@@ -15,6 +15,12 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt
 
+import multiprocessing
+from gensim.models import Word2Vec
+from time import time
+import os
+import math
+
 # Cell
 class describer(loader.article_holder):
     "inherit everything from article_holder including init"
@@ -224,7 +230,6 @@ class describer(describer):
     def w2vSimilarityOverTime(self, endogenous:str, exogenous:list=[], lastNScrapes:int=6, scope=10, keywords=[]):
         "caluculate w2v similar to publisher"
 
-
         if type(self.getw2vvector("covid")) == int:
             raise Exception ("no w2v model")
 
@@ -235,6 +240,8 @@ class describer(describer):
         today = self.df.date.max()
 
         cosims = pd.DataFrame()
+
+        #I'll pre-compute all my vectors first for eac
 
         for i in range(1,scope+1):
             df = self.df[self.df.date == recent_dates[-i]]
@@ -254,7 +261,7 @@ class describer(describer):
 class describer(describer):
     "upgrade describer with mSOT"
 
-    def meanw2vSimilarityOverTime(self, endogenous:str, exogenous:list, maxLag=24, timeFrame=48):
+    def meanw2vSimilarityOverTime(self, endogenous:str, exogenous:list, maxLag=24, timeFrame=48, verbose=False, keywords=[]):
         "calcultes w2v for endo, compared to lagged exo; check for 48 timesteps (1 day)"
         self.df.date = pd.to_datetime(self.df.date)
 
@@ -263,22 +270,49 @@ class describer(describer):
 
         lags = pd.DataFrame()
 
-        print("beginning loops")
+        dataframes = {}
+        for i in range(1,timeFrame+maxLag+1):
+            if verbose:
+                if i%10==0:
+                    print(i)
+            df = self.df[self.df.date == recent_dates[-i]]
+
+            if len(keywords) > 0:
+                df = df[df.tokens.apply(lambda x: bool(set(x) & set(keywords)))]
+
+            dataframes[recent_dates[-i]] = {}
+            for publisher in [endogenous]+exogenous:
+                a = [x for y in df[df.source==publisher].tokens for x in y]
+                dataframes[recent_dates[-i]][publisher] = sum([self.getw2vvector(x) for x in a])
 
         for lag in range(maxLag):
-            print(lag)
+            if verbose:
+                print(lag)
             cosims = pd.DataFrame()
             for i in range(1,timeFrame+1):
                 for exoPub in exogenous:
+                    error_location ="vectors"
                     try:
-                        cosims.at[recent_dates[-i], exoPub] = self.w2vCosineSimilarity(self.df[(self.df.source==endogenous) & (self.df.date == recent_dates[-i])].tokens,\
-                                                                                      self.df[(self.df.source==exoPub) & (self.df.date == recent_dates[-(i+lag)])].tokens)
+
+                        firstVector = dataframes[recent_dates[-i]][endogenous]
+
+                        error_location ="second vector"
+                        secondVector = dataframes[recent_dates[-(i+lag)]][exoPub]
+
+                        error_location="cosims"
+                        cosims.at[recent_dates[-i], exoPub] = self.w2v.wv.cosine_similarities(firstVector, [secondVector])[0]
+                        #cosims.at[recent_dates[-i], exoPub] = self.w2vCosineSimilarity(self.df[(self.df.source==endogenous) & (self.df.date == recent_dates[-i])].tokens,\
+                                                                                      #self.df[(self.df.source==exoPub) & (self.df.date == recent_dates[-(i+lag)])].tokens)
                     except:
-                        pass
+                        print("error {}".format(error_location))
+                        continue
 
 
             for exoPub in exogenous:
-                lags.at[lag, exoPub] = cosims[exoPub].mean()
+                try:
+                    lags.at[lag, exoPub] = cosims[exoPub].mean()
+                except:
+                    pass
             self.lags = lags        #for testing purposes
 
         return lags
