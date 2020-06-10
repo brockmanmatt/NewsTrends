@@ -106,7 +106,9 @@ def CoverageTrendsLoader(publications:[str] = [], path=".", dateStart:str=None, 
 
 
 # Cell
-def dailysourcepermalinksLoader(path="", filename="", **kwargs) -> pd.DataFrame:
+def dailysourcepermalinksLoader(path="", filename="", **kwargs):
+    "returns df of a json file which is date indexed with publishers for columns"
+
     df = pd.read_json("{}/{}".format(path, filename)).T
     df["date"] = df.index
     df = df.melt(id_vars = ["date"], var_name="Source", value_name="text") #make big column
