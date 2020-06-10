@@ -128,8 +128,10 @@ class describer(describer):
             endo = vectorizer.transform(df[df.source==endogenous].quickReplace).sum(axis=0)
 
             for exo in exogenous:
-                exog = vectorizer.transform(df[df.source==exo].quickReplace).sum(axis=0)
-                cosims.at[exo, recent_dates[-i]] = cosine_similarity(endo, exog)
+                try:
+                    exog = vectorizer.transform(df[df.source==exo].quickReplace).sum(axis=0)
+                    cosims.at[exo, recent_dates[-i]] = cosine_similarity(endo, exog)
+                except: pass
         #for testing purposes
         self.cosims = cosims
         return cosims
@@ -227,7 +229,7 @@ class describer(describer):
 class describer(describer):
     "update describer with similarity of w2v"
 
-    def w2vSimilarityOverTime(self, endogenous:str, exogenous:list=[], lastNScrapes:int=6, scope=10, keywords=[]):
+    def w2vSimilarityOverTime(self, endogenous:str, exogenous:list=[], lastNScrapes:int=6, scope=10, keywords=[], lowMem=True):
         "caluculate w2v similar to publisher"
 
         if type(self.getw2vvector("covid")) == int:
@@ -241,17 +243,18 @@ class describer(describer):
 
         cosims = pd.DataFrame()
 
-        #I'll pre-compute all my vectors first for eac
+        if lowMem:
+            "re-calculates dataframes each time; 0 purpose to this because it's just recalculating endo. I think really bad now that I tink of it"
+            for i in range(1,scope+1):
+                df = self.df[self.df.date == recent_dates[-i]]
+                if len(keywords) > 0:
+                    df = df[df.tokens.apply(lambda x: bool(set(x) & set(keywords)))]
+                for exo in exogenous:
+                    try:
+                        cosims.at[exo, recent_dates[-i]] = self.w2vCosineSimilarity(df[df.source==endogenous].tokens, df[df.source==exo].tokens)
+                    except:
+                        pass
 
-        for i in range(1,scope+1):
-            df = self.df[self.df.date == recent_dates[-i]]
-            if len(keywords) > 0:
-                df = df[df.tokens.apply(lambda x: bool(set(x) & set(keywords)))]
-            for exo in exogenous:
-                try:
-                    cosims.at[exo, recent_dates[-i]] = self.w2vCosineSimilarity(df[df.source==endogenous].tokens, df[df.source==exo].tokens)
-                except:
-                    pass
         #for testing purposes
         self.cosims = cosims
         return cosims
@@ -303,8 +306,13 @@ class describer(describer):
                         cosims.at[recent_dates[-i], exoPub] = self.w2v.wv.cosine_similarities(firstVector, [secondVector])[0]
                         #cosims.at[recent_dates[-i], exoPub] = self.w2vCosineSimilarity(self.df[(self.df.source==endogenous) & (self.df.date == recent_dates[-i])].tokens,\
                                                                                       #self.df[(self.df.source==exoPub) & (self.df.date == recent_dates[-(i+lag)])].tokens)
-                    except:
-                        print("error {}".format(error_location))
+                    except (KeyboardInterrupt):
+                        return
+
+                    except Exception as e:
+                        if verbose:
+                            print("error {}".format(error_location))
+                            print(e)
                         continue
 
 
